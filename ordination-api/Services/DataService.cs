@@ -138,9 +138,29 @@ public class DataService
     public DagligFast OpretDagligFast(int patientId, int laegemiddelId, 
         double antalMorgen, double antalMiddag, double antalAften, double antalNat, 
         DateTime startDato, DateTime slutDato) {
+        
+        //finder først patienten med firstOrDefault
+        var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
+     
+        //finder dernest laegemiddle
+        var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
 
-        // TODO: Implement!
-        return null!;
+        if (patient == null || laegemiddel == null)
+            throw new ArgumentException("ukendt patient or medication ID.");
+        //Opretter et nyt DagligFast-objekt hvor overstående tages med 
+        var dagligFast = new DagligFast(startDato, slutDato, laegemiddel,
+            antalMorgen, antalMiddag, antalAften, antalNat);
+    
+        //Herefter indsættes dagligFast i  ordinationen-objecktet 
+        db.Ordinationer.Add(dagligFast);
+    
+        //Til sidst bliver ordinationene tilføjet til den koreteke patient 
+        patient.ordinationer.Add(dagligFast);
+      
+        //Ændringer gemmes 
+        db.SaveChanges(); 
+        return dagligFast;
+
     }
 
     public DagligSkæv OpretDagligSkaev(int patientId, int laegemiddelId, Dosis[] doser, DateTime startDato, DateTime slutDato) {
