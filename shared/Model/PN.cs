@@ -16,14 +16,25 @@ public class PN : Ordination {
     /// Returnerer true hvis givesDen er inden for ordinationens gyldighedsperiode og datoen huskes
     /// Returner false ellers og datoen givesDen ignoreres
     /// </summary>
+    
     public bool givDosis(Dato givesDen) {
-        // TODO: Implement!
-        return false;
+	    if (givesDen.dato >= startDen && givesDen.dato <= slutDen) {
+		    dates.Add(givesDen);
+		    return true;
+	    } else {
+		    return false;
+	    }
     }
 
-    public override double doegnDosis() {
-    	// TODO: Implement!
-        return -1;
+    public override double doegnDosis()
+    {
+	    if (dates.Count == 0) return 0;
+	    
+	    DateTime første = dates.Min(d => d.dato);
+	    DateTime sidste = dates.Max(d => d.dato);
+	    int antalDage = (sidste - første).Days + 1;
+        
+	    return (getAntalGangeGivet() * antalEnheder)/antalDage;
     }
 
 

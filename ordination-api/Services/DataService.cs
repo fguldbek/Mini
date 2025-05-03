@@ -131,8 +131,22 @@ public class DataService
     }
 
     public PN OpretPN(int patientId, int laegemiddelId, double antal, DateTime startDato, DateTime slutDato) {
-        // TODO: Implement!
-        return null!;
+        var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
+        var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
+
+        if (patient == null || laegemiddel == null )
+        {
+            return null!;
+        }
+        
+        var nyPN = new PN(startDato, slutDato, antal, laegemiddel);
+        
+        db.PNs.Add(nyPN);
+        patient.ordinationer.Add(nyPN);
+        
+        db.SaveChanges();
+        
+        return nyPN;
     }
 
     public DagligFast OpretDagligFast(int patientId, int laegemiddelId, 
@@ -169,8 +183,16 @@ public class DataService
     }
 
     public string AnvendOrdination(int id, Dato dato) {
-        // TODO: Implement!
-        return null!;
+        var pn = db.PNs.FirstOrDefault(o => o.OrdinationId == id);
+
+        if (pn == null) {
+            return "Ordination ikke fundet";
+        }
+
+        bool success = pn.givDosis(dato);
+        db.SaveChanges();
+
+        return success ? "Dosis givet" : "Dato uden for gyldig periode";
     }
 
     /// <summary>

@@ -310,6 +310,8 @@ paket-files/
 # FAKE - F# Make
 .fake/
 
+*.db
+
 # CodeRush personal settings
 .cr/personal
 
