@@ -203,7 +203,23 @@ public class DataService
     /// <param name="laegemiddel"></param>
     /// <returns></returns>
 	public double GetAnbefaletDosisPerDøgn(int patientId, int laegemiddelId) {
-        // TODO: Implement!
+        
+        var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
+
+        var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
+
+        
+        if (patient == null || laegemiddel == null)
+        {
+            throw new ArgumentException("ukendt patient or medication ID.");
+        }
+
+        double vægt = patient.vaegt;
+
+        {
+            
+        }
+        
         return -1;
 	}
     
