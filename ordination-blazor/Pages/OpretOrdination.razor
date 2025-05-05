@@ -15,7 +15,8 @@
         <div class="row">
             <div class="col-md-4 border p-3">
                 <h3>Vælg patient</h3>
-                <PatientList onSelectPatient="@onSelectPatient" patienter="@patienter"></PatientList>
+                <input type="text" class="form-control mb-2" placeholder="Søg efter CPR nummer" @bind="patientSearchText" @bind:event="oninput" />
+                <PatientList onSelectPatient="@onSelectPatient" patienter="@filtreredePatienter.ToArray()"></PatientList>
             </div>
             <div class="col-md-4 border p-3">
                 <h3>Vælg lægemiddel</h3>
@@ -59,6 +60,14 @@
     private OrdinationType type;
     private PatientResponse[]? patienter;
     private double AnbefaletDosisPerDøgn { get; set; } = -1;
+    private string patientSearchText = "";
+
+    private IEnumerable<PatientResponse> filtreredePatienter =>
+        string.IsNullOrWhiteSpace(patientSearchText)
+            ? patienter ?? Array.Empty<PatientResponse>()
+            : patienter?.Where(p => p.cprnr.Contains(patientSearchText, StringComparison.OrdinalIgnoreCase)) 
+              ?? Array.Empty<PatientResponse>();
+
 
     private enum State { Start, OpretPN, OpretFast, OpretSkaev }
     private State PageState = State.Start;
