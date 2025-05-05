@@ -65,11 +65,11 @@
     public Action? onFortryd { get; set; }
     [Parameter]
     public Action<string>? onDone { get; set; }
-
     private int antalEnheder = 0;
+    
     private DateTime StartDato { get; set; } = DateTime.Now;
+  
     private DateTime SlutDato { get; set; } = DateTime.Now.AddDays(3);
-
     private async void Opret() {
         if (Patient == null || laegemiddel == null) {
             return;
