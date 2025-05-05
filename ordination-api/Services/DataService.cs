@@ -153,25 +153,20 @@ public class DataService
         double antalMorgen, double antalMiddag, double antalAften, double antalNat, 
         DateTime startDato, DateTime slutDato) {
         
-        //finder først patienten med firstOrDefault
         var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
      
-        //finder dernest laegemiddle
         var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
 
         if (patient == null || laegemiddel == null)
             throw new ArgumentException("ukendt patient or medication ID.");
-        //Opretter et nyt DagligFast-objekt hvor overstående tages med 
+
         var dagligFast = new DagligFast(startDato, slutDato, laegemiddel,
             antalMorgen, antalMiddag, antalAften, antalNat);
     
-        //Herefter indsættes dagligFast i  ordinationen-objecktet 
         db.Ordinationer.Add(dagligFast);
     
-        //Til sidst bliver ordinationene tilføjet til den koreteke patient 
         patient.ordinationer.Add(dagligFast);
       
-        //Ændringer gemmes 
         db.SaveChanges(); 
         return dagligFast;
 
