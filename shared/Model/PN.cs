@@ -21,8 +21,9 @@ public class PN : Ordination {
 	    if (givesDen.dato >= startDen && givesDen.dato <= slutDen) {
 		    dates.Add(givesDen);
 		    return true;
-	    } else {
-		    return false;
+	    } else
+	    {
+		    return false; 
 	    }
     }
 
