@@ -50,7 +50,7 @@ public class ServiceTest
 
         // Hvis koden _ikke_ smider en exception,
         // så fejler testen.
-
+        
         Console.WriteLine("Her kommer der ikke en exception. Testen fejler.");
     }
 }
