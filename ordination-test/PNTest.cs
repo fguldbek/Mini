@@ -37,6 +37,22 @@ public class PNTest
         Assert.IsFalse(result,"Should be false, date’s no good");
         Assert.AreEqual(0, pn.getAntalGangeGivet(), "No doses should be saved");
         
+        
+    }
+    
+    [TestMethod]
+    public void SamletDosis_Correct()
+    {
+        var lm = new Laegemiddel("TestMedicin", 1, 1.0, 1.0, "ml");
+        var pn = new PN(new DateTime(2025, 5, 1), new DateTime(2025, 5, 10), 2, lm);
+
+        pn.givDosis(new Dato { dato = new DateTime(2025, 5, 2) });
+        pn.givDosis(new Dato { dato = new DateTime(2025, 5, 3) });
+
+        double expected = 2 * 2; // 2 gange givet * 2 enheder = 4
+        double actual = pn.samletDosis();
+
+        Assert.AreEqual(expected, actual, "Samlet dosis should match total given doses times unit amount");
     }
     
         [TestMethod]
@@ -65,5 +81,7 @@ public class PNTest
             Assert.AreSame(pnOrdination, patient.ordinationer[0]);
             
         }
+        
+        
     }
 
