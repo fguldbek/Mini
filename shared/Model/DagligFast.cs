@@ -26,7 +26,7 @@ public class DagligFast : Ordination {
 
 	public override double doegnDosis() {
 		double sum = 0;
-		sum = MorgenDosis.antal + MorgenDosis.antal + AftenDosis.antal + NatDosis.antal; 
+		sum = MorgenDosis.antal + MiddagDosis.antal + AftenDosis.antal + NatDosis.antal; 
 		return sum;
 		
 	}
