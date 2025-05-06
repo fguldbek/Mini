@@ -153,41 +153,33 @@ public class DataService
         double antalMorgen, double antalMiddag, double antalAften, double antalNat, 
         DateTime startDato, DateTime slutDato) {
         
+        //finder først patienten med firstOrDefault
         var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
      
+        //finder dernest laegemiddle
         var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
 
         if (patient == null || laegemiddel == null)
             throw new ArgumentException("ukendt patient or medication ID.");
-
+        //Opretter et nyt DagligFast-objekt hvor overstående tages med 
         var dagligFast = new DagligFast(startDato, slutDato, laegemiddel,
             antalMorgen, antalMiddag, antalAften, antalNat);
     
+        //Herefter indsættes dagligFast i  ordinationen-objecktet 
         db.Ordinationer.Add(dagligFast);
     
+        //Til sidst bliver ordinationene tilføjet til den koreteke patient 
         patient.ordinationer.Add(dagligFast);
       
+        //Ændringer gemmes 
         db.SaveChanges(); 
         return dagligFast;
 
     }
 
     public DagligSkæv OpretDagligSkaev(int patientId, int laegemiddelId, Dosis[] doser, DateTime startDato, DateTime slutDato) {
-        var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
-        var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
-
-        if (patient == null || laegemiddel == null)
-            throw new ArgumentException("Ukendt patient eller lægemiddel.");
-
-        var dagligSkaev = new DagligSkæv(startDato, slutDato, laegemiddel) {
-            doser = doser.ToList()
-        };
-
-        db.Ordinationer.Add(dagligSkaev);
-        patient.ordinationer.Add(dagligSkaev);
-        db.SaveChanges();
-
-        return dagligSkaev;
+        // TODO: Implement!
+        return null!;
     }
 
     public string AnvendOrdination(int id, Dato dato) {
@@ -210,22 +202,25 @@ public class DataService
     /// <param name="patient"></param>
     /// <param name="laegemiddel"></param>
     /// <returns></returns>
-    public double GetAnbefaletDosisPerDøgn(int patientId, int laegemiddelId) {
-        var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
-        var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
+        public double GetAnbefaletDosisPerDøgn(int patientId, int laegemiddelId)
+        {
+            var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
+            var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
 
-        if (patient == null || laegemiddel == null)
-            throw new ArgumentException("Ukendt patient eller lægemiddel.");
+            if (patient == null || laegemiddel == null)
+            {
+                throw new ArgumentException("ukendt patient or medication ID.");
+            }
 
-        double vægt = patient.vaegt;
+            double faktor;
 
-        if (vægt < 25)
-            return vægt * laegemiddel.enhedPrKgPrDoegnLet;
-        else if (vægt <= 120)
-            return vægt * laegemiddel.enhedPrKgPrDoegnNormal;
-        else
-            return vægt * laegemiddel.enhedPrKgPrDoegnTung;
-    }
+            if (patient.vaegt < 25)
+                faktor = laegemiddel.enhedPrKgPrDoegnLet;
+            else if (patient.vaegt > 120)
+                faktor = laegemiddel.enhedPrKgPrDoegnTung;
+            else
+                faktor = laegemiddel.enhedPrKgPrDoegnNormal;
 
+            return patient.vaegt * faktor;
+        }	}
     
-}

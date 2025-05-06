@@ -51,3 +51,4 @@ public class PN : Ordination {
 		return "PN";
 	}
 }
+
