@@ -27,7 +27,6 @@ public class PNTest
         public void OpretPNTest()
         {
             
-            
             //her laver vi noget seeddata kan man sige til ordinationen 
             var patient = new Patient("121256-7890", "Anna Hansen", 65.0);
             var laegemiddel = new Laegemiddel("Paracetamol", 1, 1.5, 2.0, "ml");
