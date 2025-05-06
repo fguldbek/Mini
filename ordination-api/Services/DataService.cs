@@ -130,28 +130,40 @@ public class DataService
         return db.Laegemiddler.ToList();
     }
 
-    public PN OpretPN(int patientId, int laegemiddelId, double antal, DateTime startDato, DateTime slutDato) {
+    public PN OpretPN(int patientId, int laegemiddelId, double antal, DateTime startDato, DateTime slutDato)
+    {
+        if (slutDato < startDato)
+            throw new ArgumentException("Slutdato må ikke være før startdato");
+
         var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
         var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
-        
-        if (patient == null || laegemiddel == null )
-        {
-            return null!;
-        }
-        
+
+        if (patient == null || laegemiddel == null)
+            throw new ArgumentException("Ukendt patient eller lægemiddel ID.");
+
+        double maxTilladt = GetAnbefaletDosisPerDøgn(patientId, laegemiddelId);
+
+        if (antal > maxTilladt)
+            throw new ArgumentException(
+                $"Den ønskede dosis ({antal}) overstiger den anbefalede døgn-dosis ({maxTilladt:0.##}) for patienten.");
+
         var nyPN = new PN(startDato, slutDato, antal, laegemiddel);
-        
+
         db.PNs.Add(nyPN);
         patient.ordinationer.Add(nyPN);
-        
+
         db.SaveChanges();
-        
+
         return nyPN;
     }
+
+
 
     public DagligFast OpretDagligFast(int patientId, int laegemiddelId, 
         double antalMorgen, double antalMiddag, double antalAften, double antalNat, 
         DateTime startDato, DateTime slutDato) {
+        if (slutDato < startDato)
+            throw new ArgumentException("Slutdato må ikke være før startdato");
         
         //finder først patienten med firstOrDefault
         var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
@@ -161,6 +173,15 @@ public class DataService
 
         if (patient == null || laegemiddel == null)
             throw new ArgumentException("ukendt patient or medication ID.");
+        
+        double samletSum = antalAften + antalNat + antalMiddag + antalMiddag;
+        
+        double maxTilladt = GetAnbefaletDosisPerDøgn(patientId, laegemiddelId);
+
+        if (samletSum > maxTilladt)
+            throw new ArgumentException(
+                $"Den ønskede dosis ({samletSum}) overstiger den anbefalede døgn-dosis ({maxTilladt:0.##}) for patienten.");
+
         //Opretter et nyt DagligFast-objekt hvor overstående tages med 
         var dagligFast = new DagligFast(startDato, slutDato, laegemiddel,
             antalMorgen, antalMiddag, antalAften, antalNat);
@@ -178,11 +199,22 @@ public class DataService
     }
 
     public DagligSkæv OpretDagligSkaev(int patientId, int laegemiddelId, Dosis[] doser, DateTime startDato, DateTime slutDato) {
+        if (slutDato < startDato)
+            throw new ArgumentException("Slutdato må ikke være før startdato");
+
         var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
         var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
 
         if (patient == null || laegemiddel == null)
             throw new ArgumentException("Ukendt patient eller lægemiddel ID.");
+        
+        double samletSum = doser.Sum(d => d.antal);
+        double maxTilladt = GetAnbefaletDosisPerDøgn(patientId, laegemiddelId);
+
+        if (samletSum > maxTilladt)
+            throw new ArgumentException(
+                $"Den ønskede dosis ({doser}) overstiger den anbefalede døgn-dosis ({maxTilladt:0.##}) for patienten.");
+
 
         var dagligSkaev = new DagligSkæv(startDato, slutDato, laegemiddel, doser);
 
@@ -195,18 +227,54 @@ public class DataService
     }
 
 
-    public string AnvendOrdination(int id, Dato dato) {
-        var pn = db.PNs.FirstOrDefault(o => o.OrdinationId == id);
+    public string AnvendOrdination(int id, Dato dato)
+    {
+        var pn = db.PNs
+            .Include(p => p.laegemiddel)
+            .Include(p => p.dates)
+            .FirstOrDefault(o => o.OrdinationId == id);
 
-        if (pn == null) {
+        if (pn == null)
             return "Ordination ikke fundet";
+
+        // Find patient, inkl. deres ordinationer
+        var patient = db.Patienter
+            .Include(p => p.ordinationer)
+            .ThenInclude(o => (o as PN)!.laegemiddel)
+            .Include(p => p.ordinationer)
+            .ThenInclude(o => (o as PN)!.dates)
+            .FirstOrDefault(p => p.ordinationer.Any(o => o.OrdinationId == id));
+
+        if (patient == null)
+            return "Patient ikke fundet for ordinationen";
+
+        // Beregn anbefalet maksimal dagsdosis
+        double maxTilladt = GetAnbefaletDosisPerDøgn(patient.PatientId, pn.laegemiddel.LaegemiddelId);
+
+        // Summer eksisterende doser for samme lægemiddel og dato
+        double totalGivet = patient.ordinationer
+            .OfType<PN>()
+            .Where(o => o.laegemiddel.LaegemiddelId == pn.laegemiddel.LaegemiddelId)
+            .Where(o => o.dates.Any(d => d.dato.Date == dato.dato.Date))
+            .Sum(o => o.antalEnheder);
+
+        // Kontrollér om den nye dosis vil overskride max
+        if ((totalGivet + pn.antalEnheder) > maxTilladt)
+        {
+            return $"Dosis ikke givet. Maksimal anbefalet døgn-dosis ({maxTilladt}) vil blive overskredet.";
         }
 
+        // Giv dosis hvis datoen er gyldig
         bool success = pn.givDosis(dato);
-        db.SaveChanges();
+        if (success)
+        {
+            db.SaveChanges();
+            return "Dosis givet";
+        }
 
-        return success ? "Dosis givet" : "Dato uden for gyldig periode";
+        return "Dato uden for gyldig periode";
     }
+
 
     /// <summary>
     /// Den anbefalede dosis for den pågældende patient, per døgn, hvor der skal tages hensyn til
