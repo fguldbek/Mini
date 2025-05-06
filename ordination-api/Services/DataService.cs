@@ -37,6 +37,10 @@ public class DataService
             db.Patienter.Add(patients[2]);
             db.Patienter.Add(patients[3]);
             db.Patienter.Add(patients[4]);
+            
+            var lightPatient = new Patient("111222-3333", "Lille Person", 20.5);
+            db.Patienter.Add(lightPatient);
+            
             db.SaveChanges();
         }
 
