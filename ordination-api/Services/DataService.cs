@@ -178,9 +178,22 @@ public class DataService
     }
 
     public DagligSkæv OpretDagligSkaev(int patientId, int laegemiddelId, Dosis[] doser, DateTime startDato, DateTime slutDato) {
-        // TODO: Implement!
-        return null!;
+        var patient = db.Patienter.FirstOrDefault(p => p.PatientId == patientId);
+        var laegemiddel = db.Laegemiddler.FirstOrDefault(l => l.LaegemiddelId == laegemiddelId);
+
+        if (patient == null || laegemiddel == null)
+            throw new ArgumentException("Ukendt patient eller lægemiddel ID.");
+
+        var dagligSkaev = new DagligSkæv(startDato, slutDato, laegemiddel, doser);
+
+        db.Ordinationer.Add(dagligSkaev);
+        patient.ordinationer.Add(dagligSkaev);
+
+        db.SaveChanges();
+
+        return dagligSkaev;
     }
+
 
     public string AnvendOrdination(int id, Dato dato) {
         var pn = db.PNs.FirstOrDefault(o => o.OrdinationId == id);
